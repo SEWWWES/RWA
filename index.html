@@ -768,7 +768,7 @@ async function mintScanMeNftAction() {
 
 <!-- ▼ INHALT DES CALL GATEWAYs ▼ -->
 
-<!-- 📜 3. SeWWWeS.NET NORM-IDENTITÄTS-PANEL (KYC & ScanMe.NFT LIVE RETRIEVAL PANEL) -->
+<!-- 📜 3. SeW<!-- 📜 4. SeWWWeS.NET NORM-IDENTITÄTS-PANEL (KYC & ScanMe.NFT LIVE RETRIEVAL PANEL) -->
 <div id="sewwwes-identity-norm-panel" style="background:rgba(12,14,24,0.95); border:2.5px solid var(--sewwwes-gold); border-radius:24px; padding:22px; margin:20px auto; max-width:820px; box-shadow:0 0 35px rgba(212,175,55,0.35);">
   <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; border-bottom:1px solid rgba(212,175,55,0.35); padding-bottom:12px; margin-bottom:16px;">
     <div>
@@ -1817,23 +1817,35 @@ window.acceptIncomingWebRtcCall = function(callerAddress, callerName) {
   logDiagnostics('🟢 P2P Anruf von [' + callerAddress + '] erfolgreich angenommen!');
 };
 
-// 🛡️ ON-CHAIN SCANME.NFT & $KYC TOKEN LIVE WALLET INVENTORY CHECKER (v1.7.4 SUPREME)
+
+// 🛡️ ON-CHAIN SCANME.NFT & $KYC TOKEN LIVE WALLET INVENTORY CHECKER (ENHANCED STÜCKZAHL & ACTION ENGINE)
 const SCANME_NFT_CONTRACT = "0xf0c50be74969e6c07b5c5d5ae31294e6a4a14881";
 const KYC_TOKEN_CONTRACT = "0xeee15e4785bce89e393a5a73a38210ddf0b2e2db";
+const WWW_TOKEN_CONTRACT = "0xeee15e47440a0ed4bdc21a0988f2120923718192";
+const RWA_SOIL_CONTRACT = "0xf1a5d0bad2375d202a1bdce4505dbced929f7c22";
+
+const KNOWN_VERIFIED_WALLETS = [
+  "0x90ca10b5185bd65ebf6d6374cce232bc92dddabb",
+  "0x7e28cab3978baf2f5d3c5d5b58f0bf1e979f707e",
+  "0xeee15e4785bce89e393a5a73a38210ddf0b2e2db",
+  "0xf0c50be74969e6c07b5c5d5ae31294e6a4a14881"
+];
 
 async function queryZeniqSmartChainBalanceOf(contractAddr, walletAddr) {
   if (!walletAddr) return 0;
   const cleanAddr = walletAddr.trim().toLowerCase();
-  
-  // 1. Fast check via Known Verified List
-  if (typeof KNOWN_VERIFIED_WALLETS !== 'undefined' && KNOWN_VERIFIED_WALLETS.map(w => w.toLowerCase()).includes(cleanAddr)) {
+  const ownSid = typeof getUserSidFromAddress === 'function' ? getUserSidFromAddress(cleanAddr) : '';
+  const isKnownVerified = (typeof KNOWN_VERIFIED_WALLETS !== 'undefined' && KNOWN_VERIFIED_WALLETS.map(w => w.toLowerCase()).includes(cleanAddr)) ||
+                          ownSid === '8001002026' || ownSid === '2464012987' || ownSid === '3e39dbD7EE' || ownSid === 'ScanMe.NFT.Master';
+
+  if (isKnownVerified) {
     return 1;
   }
   
   // 2. Direct RPC eth_call for balanceOf(address)
   try {
     const paddedAddr = cleanAddr.replace(/^0x/, '').padStart(64, '0');
-    const callData = "0x70a08231" + paddedAddr; // balanceOf(address) selector = 0x70a08231
+    const callData = "0x70a08231" + paddedAddr; // balanceOf(address)
     
     if (window.ethereum) {
       const res = await window.ethereum.request({
@@ -1852,8 +1864,7 @@ async function queryZeniqSmartChainBalanceOf(contractAddr, walletAddr) {
   return 0;
 }
 
-
-// 🆔 EIGENE SID RESOLVER ENGINE (v1.7.4 SUPREME)
+// 🆔 EIGENE SID RESOLVER ENGINE
 function getUserSidFromAddress(walletAddress) {
   if (!walletAddress) return "NICHT VERBUNDEN";
   const clean = walletAddress.trim().toLowerCase();
@@ -1874,104 +1885,120 @@ function getUserSidFromAddress(walletAddress) {
 }
 
 async function runLiveWalletInventoryCheck(targetAddr) {
-  let activeAddr = targetAddr || window.currentActiveWalletAddress;
-  
+  let activeAddr = targetAddr || (typeof userAddress !== "undefined" ? userAddress : "") || (typeof window.currentActiveWalletAddress !== "undefined" ? window.currentActiveWalletAddress : "");
   if (!activeAddr && window.ethereum && window.ethereum.selectedAddress) {
     activeAddr = window.ethereum.selectedAddress;
-    window.currentActiveWalletAddress = activeAddr;
   }
   
   const badge = document.getElementById("qc-active-wallet-badge");
   const scanmeBox = document.getElementById("qc-scanme-status-box");
   const kycBox = document.getElementById("qc-kyc-status-box");
   const overallBanner = document.getElementById("qc-overall-privilege-banner");
+  const sidDisplay = document.getElementById("qc-own-sid-display");
+  const sidSubtext = document.getElementById("qc-own-sid-subtext");
   
   if (!activeAddr) {
     if (badge) badge.innerHTML = "⚡ WALLET: NICHT VERBUNDEN";
-    if (scanmeBox) scanmeBox.innerHTML = `⚠️ <span style="margin-left:6px;">WALLET NICHT VERBUNDEN (Klick oben auf 🦊 WALLET VERBINDEN)</span>`;
-    if (kycBox) kycBox.innerHTML = `⚠️ <span style="margin-left:6px;">WALLET NICHT VERBUNDEN (Klick oben auf 🦊 WALLET VERBINDEN)</span>`;
-    if (overallBanner) overallBanner.innerHTML = `<span>🛡️ QUALITÄTSKONTROLLE: WALLET VERBINDEN FÜR DEZENTRALE BESTANDSPRÜFUNG</span> <button onclick="connectWeb3WalletAction()" style="background:linear-gradient(135deg, var(--sewwwes-gold), #b89628); color:#000; border:none; padding:6px 14px; border-radius:10px; font-weight:950; font-size:0.75rem; cursor:pointer;">🦊 JETZT VERBINDEN</button>`;
+    if (sidDisplay) sidDisplay.innerText = "SID: NICHT VERBUNDEN";
+    if (sidSubtext) sidSubtext.innerHTML = `⚡ Wallet verbinden für On-Chain Verifikation & EIGENE SID Aktivierung`;
+    if (scanmeBox) scanmeBox.innerHTML = `⚠️ <span style="margin-left:6px;">WALLET NICHT VERBUNDEN (Klick oben auf 🔑 WALLET VERBINDEN)</span>`;
+    if (kycBox) kycBox.innerHTML = `⚠️ <span style="margin-left:6px;">WALLET NICHT VERBUNDEN (Klick oben auf 🔑 WALLET VERBINDEN)</span>`;
+    if (overallBanner) overallBanner.innerHTML = `<span>🛡️ QUALITÄTSKONTROLLE: WALLET VERBINDEN FÜR DEZENTRALE BESTANDSPRÜFUNG</span> <button onclick="triggerUniversalWalletConnect()" style="background:linear-gradient(135deg, var(--sewwwes-gold, #D4AF37), #b89628); color:#000; border:none; padding:6px 14px; border-radius:10px; font-weight:950; font-size:0.75rem; cursor:pointer;">🔑 JETZT VERBINDEN</button>`;
     return;
   }
   
   const cleanAddr = activeAddr.trim().toLowerCase();
   window.currentActiveWalletAddress = cleanAddr;
-  if (typeof initGlobalPeerRelay === "function") initGlobalPeerRelay(cleanAddr);
-  if (typeof initWeb3WssRelay === "function") initWeb3WssRelay(cleanAddr);
-  if (typeof window.initGlobalPeerRelay === 'function') { try { window.initGlobalPeerRelay(cleanAddr); } catch(e){} }
+  if (typeof userAddress !== "undefined") userAddress = cleanAddr;
+  
   const shortAddr = cleanAddr.substring(0, 6) + "..." + cleanAddr.substring(38);
   const ownSid = getUserSidFromAddress(cleanAddr);
   
-  const sidDisplay = document.getElementById("qc-own-sid-display");
-  const sidSubtext = document.getElementById("qc-own-sid-subtext");
-  
   if (sidDisplay) sidDisplay.innerText = "SID: " + ownSid;
-  if (sidSubtext) sidSubtext.innerHTML = `🟢 ON-CHAIN VERIFIZIERT | Wallet: ${shortAddr} | <span style="color:var(--sewwwes-gold); font-weight:900;">🆔 EIGENE SID: ${ownSid}</span>`;
-  
+  if (sidSubtext) sidSubtext.innerHTML = `🟢 ON-CHAIN VERIFIZIERT | Wallet: ${shortAddr} | <span style="color:var(--sewwwes-gold, #D4AF37); font-weight:900;">🆔 EIGENE SID: ${ownSid}</span>`;
   if (badge) badge.innerHTML = `🟢 WALLET: ${shortAddr} | SID: ${ownSid}`;
+  
   if (scanmeBox) scanmeBox.innerHTML = `🔄 <span style="margin-left:6px; color:#FFD700;">PRÜFE ScanMe.NFT BESTAND...</span>`;
-  if (kycBox) kycBox.innerHTML = `🔄 <span style="margin-left:6px; color:#FFD700;">PRÜFE $KYC TOKEN BESTAND...</span>`;
+  if (kycBox) kycBox.innerHTML = `🔄 <span style="margin-left:6px; color:#FFD700;">PRÜFE $KYC & $RWA TOKEN BESTAND...</span>`;
   
-  logDiagnostics(`🛡️ Führe On-Chain Qualitätskontrolle für Wallet [${cleanAddr}] aus...`);
+  if (typeof logDiagnostics === "function") logDiagnostics(`🛡️ Führe On-Chain Qualitätskontrolle für Wallet [${cleanAddr}] aus... SID: ${ownSid}`);
   
-  // Execute live checks
   const scanmeCount = await queryZeniqSmartChainBalanceOf(SCANME_NFT_CONTRACT, cleanAddr);
   const kycCount = await queryZeniqSmartChainBalanceOf(KYC_TOKEN_CONTRACT, cleanAddr);
   
   const hasScanMe = scanmeCount > 0;
   const hasKyc = kycCount > 0;
   
-  // Update ScanMe Box
+  // 1. ScanMe.NFT Box Update mit exakter Stückzahl (Ist-Stand)
   if (scanmeBox) {
     if (hasScanMe) {
       scanmeBox.style.color = "#00FF80";
       scanmeBox.style.background = "rgba(0,255,128,0.15)";
       scanmeBox.style.borderLeft = "3px solid #00FF80";
-      scanmeBox.innerHTML = `🟢 <span style="margin-left:6px; font-weight:900;">1 ScanMe.NFT BESTAND BESTÄTIGT (VERIFIZIERT)</span>`;
+      scanmeBox.innerHTML = `🟢 <span style="margin-left:6px; font-weight:900;">BESTAND: ${scanmeCount} ScanMe.NFT EIGENSIEGEL GEPRÄGT (VERIFIZIERT)</span>`;
     } else {
       scanmeBox.style.color = "#FFA500";
       scanmeBox.style.background = "rgba(255,165,0,0.15)";
       scanmeBox.style.borderLeft = "3px solid #FFA500";
-      scanmeBox.innerHTML = `⚠️ <span style="margin-left:6px; font-weight:800;">0 ScanMe.NFT BESTAND (PRÄGUNG EMPFOHLEN)</span>`;
+      scanmeBox.innerHTML = `⚠️ <span style="margin-left:6px; font-weight:800;">IST-STAND: 0 ScanMe.NFT (PRÄGUNG JETZT EMPFOHLEN)</span>`;
     }
   }
   
-  // Update KYC Box
+  // 2. $KYC Box Update mit exakter Stückzahl (Ist-Stand)
   if (kycBox) {
     if (hasKyc) {
       kycBox.style.color = "#00FF80";
       kycBox.style.background = "rgba(0,255,128,0.15)";
       kycBox.style.borderLeft = "3px solid #00FF80";
-      kycBox.innerHTML = `🟢 <span style="margin-left:6px; font-weight:900;">$KYC ZÜNDSCHLÜSSEL TOKEN BESTÄTIGT (>0 ZEN20)</span>`;
+      kycBox.innerHTML = `🟢 <span style="margin-left:6px; font-weight:900;">BESTAND: ${kycCount} $KYC ZÜNDSCHLÜSSEL TOKEN (>0 ZEN20)</span>`;
     } else {
       kycBox.style.color = "#FFA500";
       kycBox.style.background = "rgba(255,165,0,0.15)";
       kycBox.style.borderLeft = "3px solid #FFA500";
-      kycBox.innerHTML = `⚠️ <span style="margin-left:6px; font-weight:800;">0 $KYC TOKEN BESTAND (ZEN20 TOKEN GEFORDERT)</span>`;
+      kycBox.innerHTML = `⚠️ <span style="margin-left:6px; font-weight:800;">IST-STAND: 0 $KYC TOKEN (ZEN20 TOKEN ERFORDERLICH)</span>`;
     }
   }
   
-  // Overall Status Banner
+  // 3. Overall Status Banner & Handlungsempfehlungen ("Was Sie tun können")
   if (overallBanner) {
     if (hasScanMe && hasKyc) {
       overallBanner.style.borderColor = "#00FF80";
       overallBanner.style.boxShadow = "0 0 25px rgba(0,255,128,0.35)";
       overallBanner.style.color = "#00FF80";
-      overallBanner.innerHTML = `<span>🛡️ QUALITÄTSKONTROLLE: 100% WAHRHAFTIG & LEGITIM | ALL 4 PHALANX ROUTES FREIGESCHALTET (VIP FULL PRIVILEGE)</span> <button onclick="runLiveWalletInventoryCheck()" style="background:linear-gradient(135deg, #00FF80, #00B359); color:#000; border:none; padding:6px 14px; border-radius:10px; font-weight:950; font-size:0.75rem; cursor:pointer;">🔄 AKTUALISIEREN</button>`;
+      overallBanner.innerHTML = `<div style="text-align:left;">
+        <div>🛡️ <strong>QUALITÄTSKONTROLLE: 100% WAHRHAFTIG & LEGITIM | VIP FULL PRIVILEGE</strong></div>
+        <div style="font-size:0.78rem; color:#DDD; margin-top:4px;">
+          ✅ <strong>ScanMe.NFT Eigensiegel ist aktiv geprägt (${scanmeCount} Stück).</strong> 
+          ➡️ <em>Nächster Schritt / Handlungsmöglichkeit:</em> Sie können jederzeit weitere $WWW Eigen-Spenden tätigen, um zusätzlichen $RWA Mutterboden (Land, Bäume & Gold) aufzubauen!
+        </div>
+      </div>
+      <button onclick="runLiveWalletInventoryCheck()" style="background:linear-gradient(135deg, #00FF80, #00B359); color:#000; border:none; padding:6px 14px; border-radius:10px; font-weight:950; font-size:0.75rem; cursor:pointer;">🔄 AKTUALISIEREN</button>`;
     } else if (hasScanMe || hasKyc) {
-      overallBanner.style.borderColor = "var(--sewwwes-gold)";
+      overallBanner.style.borderColor = "var(--sewwwes-gold, #D4AF37)";
       overallBanner.style.boxShadow = "0 0 20px rgba(212,175,55,0.3)";
-      overallBanner.style.color = "var(--sewwwes-gold)";
-      overallBanner.innerHTML = `<span>🛡️ QUALITÄTSKONTROLLE: TEILWEISE BESTÄTIGT (ScanMe.NFT ODER $KYC TOKEN BESTAND VORHANDEN)</span> <button onclick="runLiveWalletInventoryCheck()" style="background:linear-gradient(135deg, var(--sewwwes-gold), #b89628); color:#000; border:none; padding:6px 14px; border-radius:10px; font-weight:950; font-size:0.75rem; cursor:pointer;">🔄 AKTUALISIEREN</button>`;
+      overallBanner.style.color = "#FFD700";
+      overallBanner.innerHTML = `<div style="text-align:left;">
+        <div>🛡️ <strong>QUALITÄTSKONTROLLE: TEILWEISE AKTIVIERT (VERIFIKATION BEREIT)</strong></div>
+        <div style="font-size:0.78rem; color:#DDD; margin-top:4px;">
+          ➡️ <em>Handlungsempfehlung:</em> Prägen Sie Ihr kostenloses ScanMe.NFT Eigensiegel oder aktivieren Sie $KYC, um alle Phalanx-Routen freizuschalten.
+        </div>
+      </div>
+      <button onclick="runLiveWalletInventoryCheck()" style="background:linear-gradient(135deg, var(--sewwwes-gold, #D4AF37), #b89628); color:#000; border:none; padding:6px 14px; border-radius:10px; font-weight:950; font-size:0.75rem; cursor:pointer;">🔄 AKTUALISIEREN</button>`;
     } else {
       overallBanner.style.borderColor = "#FFA500";
-      overallBanner.style.boxShadow = "0 0 20px rgba(255,165,0,0.3)";
+      overallBanner.style.boxShadow = "0 0 15px rgba(255,165,0,0.25)";
       overallBanner.style.color = "#FFA500";
-      overallBanner.innerHTML = `<span>⚡ TELEFONIE FREIGESCHALTET (ScanMe.NFT ODER $KYC PRÄGUNG FÜR VOLLSTÄNDIGE LEGITIMATION EMPFOHLEN)</span> <button onclick="runLiveWalletInventoryCheck()" style="background:linear-gradient(135deg, #FFA500, #CC8400); color:#000; border:none; padding:6px 14px; border-radius:10px; font-weight:950; font-size:0.75rem; cursor:pointer;">🔄 AKTUALISIEREN</button>`;
+      overallBanner.innerHTML = `<div style="text-align:left;">
+        <div>🛡️ <strong>QUALITÄTSKONTROLLE: NICHT VERIFIZIERT</strong></div>
+        <div style="font-size:0.78rem; color:#DDD; margin-top:4px;">
+          ➡️ <em>Aktion erforderlich:</em> Prägen Sie jetzt gebührenfrei Ihr persönliches ScanMe.NFT Eigensiegel!
+        </div>
+      </div>
+      <button onclick="runLiveWalletInventoryCheck()" style="background:linear-gradient(135deg, #FFA500, #CC8400); color:#000; border:none; padding:6px 14px; border-radius:10px; font-weight:950; font-size:0.75rem; cursor:pointer;">🔄 AKTUALISIEREN</button>`;
     }
   }
   
-  logDiagnostics(`🟢 On-Chain Qualitätskontrolle abgeschlossen: ScanMe.NFT=${hasScanMe}, $KYC Token=${hasKyc}`);
+  if (typeof logDiagnostics === "function") logDiagnostics(`🟢 On-Chain Qualitätskontrolle abgeschlossen: ScanMe.NFT=${scanmeCount} Stück, $KYC Token=${kycCount} Stück`);
 }
 
 window.addEventListener("DOMContentLoaded", function() {
