@@ -1,0 +1,13 @@
+{
+  "nomo_manifest_version": "1.1.0",
+  "webon_id": "net.sewwwes.rwa",
+  "webon_name": "\u00a9\ufe0f RWA.SeWWWeS.NET",
+  "webon_version": "1.0.4",
+  "webon_url": "https://rwa.sewwwes.net",
+  "webon_icon": "assets/images/webon-icon-sewwwes-rwa.png",
+  "permissions": [
+    "nomo.permission.CAMERA",
+    "nomo.permission.SIGN_EVATION_TRANSACTION",
+    "nomo.permission.GET_INSTALLED_WEBONS"
+  ]
+}
