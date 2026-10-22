@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- 🌐 Hauptseite: $RWA Direct Minter Gateway -->
+  <url>
+    <loc>https://rwa.sewwwes.net/</loc>
+    <lastmod>2026-10-21</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://rwa.sewwwes.net/assets/images/webon-icon-sewwwes-rwa.png</image:loc>
+      <image:title>©️ RWA.SeWWWeS.NET - Direct $RWA Soil Minter Icon</image:title>
+      <image:caption>Real-World Asset Mutterboden Schöpfungs-Minter (Norm 100:10:1:0.1)</image:caption>
+    </image:image>
+  </url>
+
+  <!-- 📱 NomoApp WebOn Manifest für automatische Erkennung -->
+  <url>
+    <loc>https://rwa.sewwwes.net/nomo_manifest.json</loc>
+    <lastmod>2026-10-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- ⚙️ Smart Contract Interface & Verification Route -->
+  <url>
+    <loc>https://rwa.sewwwes.net/#rwa-minter-engine-section</loc>
+    <lastmod>2026-10-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+</urlset>
